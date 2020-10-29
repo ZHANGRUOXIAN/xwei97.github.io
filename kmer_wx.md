@@ -503,7 +503,7 @@ KmerSpectra(kmer_ecoli_df, savetopdf=True,
             title = '8-mer spectrum of ${E.coli}$')
 ```
 
-<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gk3y885tblj30yw0r60w3.jpg" alt="image-20201026224041208" style="zoom:33%;" />
+<img src="https://tva1.sinaimg.cn/large/0081Kckwly1gk3y885tblj30yw0r60w3.jpg" alt="image-20201026224041208" style="zoom:13%;" />
 
 ### Dependence
 
