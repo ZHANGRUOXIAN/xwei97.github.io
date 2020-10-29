@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Oct 22 21:55:28 2020
+
+@author: xinwei
+"""
+
+def get_fasta(fasta_path):
+    fasta = {}
+    print("\nGetting DNA sequence...")
+    with open(fasta_path, 'r') as file:
+	    for line in file:
+	        if line.startswith(">"):
+	            name = line.rstrip()
+	            fasta[name] = ''
+	            continue
+	        fasta[name] += line.rstrip()
+    print("There are %d sequences." % len(fasta))
+    return(fasta)
+
+def TRANSLATE(fasta = {}, fasta_path = '', begin = 1, width = 60, outpath = ''):
+    codon_aa = {
+        'ATA':'I', 'ATC':'I', 'ATT':'I', 'ATG':'M',
+        'ACA':'T', 'ACC':'T', 'ACG':'T', 'ACT':'T',
+        'AAC':'N', 'AAT':'N', 'AAA':'K', 'AAG':'K',
+        'AGC':'S', 'AGT':'S', 'AGA':'R', 'AGG':'R',
+        'CTA':'L', 'CTC':'L', 'CTG':'L', 'CTT':'L',
+        'CCA':'P', 'CCC':'P', 'CCG':'P', 'CCT':'P',
+        'CAC':'H', 'CAT':'H', 'CAA':'Q', 'CAG':'Q',
+        'CGA':'R', 'CGC':'R', 'CGG':'R', 'CGT':'R',
+        'GTA':'V', 'GTC':'V', 'GTG':'V', 'GTT':'V',
+        'GCA':'A', 'GCC':'A', 'GCG':'A', 'GCT':'A',
+        'GAC':'D', 'GAT':'D', 'GAA':'E', 'GAG':'E',
+        'GGA':'G', 'GGC':'G', 'GGG':'G', 'GGT':'G',
+        'TCA':'S', 'TCC':'S', 'TCG':'S', 'TCT':'S',
+        'TTC':'F', 'TTT':'F', 'TTA':'L', 'TTG':'L',
+        'TAC':'Y', 'TAT':'Y', 'TAA':'_', 'TAG':'_',
+        'TGC':'C', 'TGT':'C', 'TGA':'_', 'TGG':'W'
+    }
+    if fasta == {}: fasta = get_fasta(fasta_path)
+    heads = list(fasta.keys())
+    seqs = list(fasta.values())
+    seqs_num = len(fasta)
+    # default output path
+    filename = fasta_path.split("/")[-1]
+    if outpath == '': outpath = fasta_path.replace(filename, filename.split(".")[0] + "_translated.fasta")
+    outfile = open(outpath, "w")
+    print("\nTranslating DNA into AA sequence...")
+    for i in range(seqs_num):
+        print(heads[i])
+        aa_seq = ''
+        seq = seqs[i]
+        for j in range(begin-1, len(seq),3):
+            if seq[j:j+3] not in codon_aa:
+                aa_seq += 'X'  # 'NNN':X, any AA
+                break
+            if j+3 <= len(seq)-1:
+                aa_seq += codon_aa[seq[j:j+3]]
+            else: 
+                break
+        outfile.write(heads[i]+"\n")
+        start = 0; end = start + width
+        while end < len(aa_seq):
+            outfile.write(str(aa_seq[start:end])+"\n")
+            start += width; end += width
+        while end >= len(aa_seq):
+            outfile.write(str(aa_seq[start:])+"\n")
+            break
+    outfile.close()
+    print("OK :)")
+    print("The FASTA files of the AA sequence has been saved in '%s'." % outpath)
+
+import argparse
+parser = argparse.ArgumentParser(description='Translate DNA into AA sequence.')
+parser.add_argument('--path', '-p', help='path of your fasta file', required=True)
+parser.add_argument('--width', '-w', type=int, help='set the number of AA per line output to FASTA (default 60)', default=60)
+parser.add_argument('--begin', '-b', type=int, help='set translation start location (generally 1/2/3, default 1)', default=60)
+parser.add_argument('--outpath', '-o', help='specify the output file (default is to FASTA directory)', default='')
+args = parser.parse_args()
+
+if __name__ == '__main__':
+    try:
+        TRANSLATE(fasta = {}, fasta_path = args.path, width = args.width, begin = args.begin, outpath = args.outpath)
+    except Exception as e:
+        print(e)

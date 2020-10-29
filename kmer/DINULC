@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Oct 23 22:04:12 2020
+
+@author: xinwei
+"""
+def get_fasta(fasta_path):
+    fasta = {}
+    print("\nGetting DNA sequence...")
+    with open(fasta_path, 'r') as file:
+	    for line in file:
+	        if line.startswith(">"):
+	            name = line.rstrip()
+	            fasta[name] = ''
+	            continue
+	        fasta[name] += line.rstrip()
+    print("There are %d sequences." % len(fasta))
+    return(fasta)
+
+def KmerCounter(fasta = {}, fasta_path = '', k = 8, savetofile = False, label = '', outdir = ''):    
+    import pandas as pd
+    kmers = {}
+    if fasta == {}: fasta = get_fasta(fasta_path)
+    heads = list(fasta.keys())
+    seqs = list(fasta.values())
+    seqs_num = len(fasta)
+    # default output path
+    if savetofile:
+        filename = fasta_path.split("/")[-1]
+        if outdir == '': 
+            outpath = fasta_path.replace(filename, filename.split(".")[0] + '_' + str(k) + "mer")
+        else: outpath = outdir + "/" + filename.split(".")[0] + '_' + str(k) + "mer"
+    kmer_res = {}
+    print("\nCounting %dmers..." % k)
+    for i in range(seqs_num):
+        seq = seqs[i]
+        for j in range(len(seq) - k + 1):
+            kmer = seq[j:j+k]
+            if kmer in kmers:
+                kmers[kmer] += 1
+            else:
+                kmers[kmer] = 1
+        df = pd.DataFrame({
+            'kmer': list(kmers.keys()), 
+            'count': list(kmers.values())
+        })
+        df['freq'] = round(df['count']/sum(df['count']) * 100, 1)
+        if label != '': df['label'] = label
+        df_sorted =  df.sort_values(by=['count', 'kmer'], ascending = (False, True))
+        if savetofile: 
+            outpath = outpath + '_seq'+str(i+1)+'.txt'
+            df_sorted.to_csv(outpath, index=False, sep = '\t')
+        print(heads[i]) 
+        print(df_sorted)
+        print()
+        kmer_res[heads[i]] = df_sorted
+        if savetofile: print("The results of %d-mer counts has been saved in '%s'" % (k, outpath))
+    print("OK :)")
+    if seqs_num == 1: return(df_sorted)
+    else: return(kmer_res)
+
+def DINULC(fasta = {}, fasta_path = ''):
+    KmerCounter(fasta=fasta, fasta_path=fasta_path, k=2, savetofile=False)
+    
+import argparse
+parser = argparse.ArgumentParser(description='Count 2-mers.')
+parser.add_argument('--path', '-p', help='path of your fasta file', required=True)
+args = parser.parse_args()
+
+if __name__ == '__main__':
+    try:
+        DINULC(fasta = {}, fasta_path = args.path)
+    except Exception as e:
+        print(e)

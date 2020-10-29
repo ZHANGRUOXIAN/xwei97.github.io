@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Oct 22 21:55:28 2020
+
+@author: xinwei
+"""
+
+def get_fasta(fasta_path):
+    fasta = {}
+    print("\nGetting DNA sequence...")
+    with open(fasta_path, 'r') as file:
+	    for line in file:
+	        if line.startswith(">"):
+	            name = line.rstrip()
+	            fasta[name] = ''
+	            continue
+	        fasta[name] += line.rstrip()
+    print("There are %d sequences." % len(fasta))
+    return(fasta)
+
+def LENGTH(fasta={}, fasta_path=''):
+    if fasta == {}: fasta = get_fasta(fasta_path)
+    heads = list(fasta.keys())
+    seqs = list(fasta.values())
+    seqs_num = len(fasta)
+    print("\nCounting DNA bases...")
+    for i in range(seqs_num):
+        print(heads[i])
+        print("length: %d bases" % len(seqs[i]))
+
+import argparse
+parser = argparse.ArgumentParser(description='Count DNA bases, i.e. get sequence length.')
+parser.add_argument('--path', '-p', help='path of your fasta file', required=True)
+args = parser.parse_args()
+
+if __name__ == '__main__':
+    try:
+        LENGTH(fasta={}, fasta_path=args.path)
+    except Exception as e:
+        print(e)

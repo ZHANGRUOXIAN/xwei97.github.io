@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Oct 22 21:55:28 2020
+
+@author: xinwei
+"""
+
+def get_fasta(fasta_path):
+    fasta = {}
+    print("\nGetting DNA sequence...")
+    with open(fasta_path, 'r') as file:
+	    for line in file:
+	        if line.startswith(">"):
+	            name = line.rstrip()
+	            fasta[name] = ''
+	            continue
+	        fasta[name] += line.rstrip()
+    print("There are %d sequences." % len(fasta))
+    return(fasta)
+
+def KmerCounter(fasta = {}, fasta_path = '', k = 8, savetofile = False, label = '', outdir = ''):    
+    import pandas as pd
+    kmers = {}
+    if fasta == {}: fasta = get_fasta(fasta_path)
+    heads = list(fasta.keys())
+    seqs = list(fasta.values())
+    seqs_num = len(fasta)
+    # default output path
+    if savetofile:
+        filename = fasta_path.split("/")[-1]
+        if outdir == '': 
+            outpath = fasta_path.replace(filename, filename.split(".")[0] + '_' + str(k) + "mer")
+        else: outpath = outdir + "/" + filename.split(".")[0] + '_' + str(k) + "mer"
+    kmer_res = {}
+    print("\nCounting %dmers..." % k)
+    for i in range(seqs_num):
+        seq = seqs[i]
+        for j in range(len(seq) - k + 1):
+            kmer = seq[j:j+k]
+            if kmer in kmers:
+                kmers[kmer] += 1
+            else:
+                kmers[kmer] = 1
+        df = pd.DataFrame({
+            'kmer': list(kmers.keys()), 
+            'count': list(kmers.values())
+        })
+        df['freq'] = df['count']/sum(df['count'])
+        if label != '': df['label'] = label
+        df_sorted =  df.sort_values(by=['count', 'kmer'], ascending = (False, True))
+        if savetofile: 
+            outpath = outpath + '_seq'+str(i+1)+'.txt'
+            df_sorted.to_csv(outpath, index=False, sep = '\t')
+        print(heads[i]) 
+        print(df_sorted)
+        print()
+        kmer_res[heads[i]] = df_sorted
+        if savetofile: print("The results of %d-mer counts has been saved in '%s'" % (k, outpath))
+    print("OK :)")
+    if seqs_num == 1: return(df_sorted)
+    else: return(kmer_res)
+
+def KmerSpectra(kmer_df, savetopdf = True, pdfpath = '', title = "Kmer spectrum", col = ''):
+    from collections import Counter
+    import matplotlib.pyplot as plt
+    import os
+    import seaborn as sns
+    if col == '':
+        pal = sns.color_palette()
+        col = pal.as_hex()
+    ci = 0
+    ax = plt.subplot()
+    print("\nPloting Kmer spectrum...")
+    for l in set(kmer_df.label):
+        sub_df = kmer_df.loc[kmer_df['label'] == l, ]
+        count = list(sub_df['count'])
+        count_dict = Counter(count)
+        x = list(count_dict.keys())
+        y = list(count_dict.values())
+        ax.scatter(x, y, c = col[ci], s = 15, label = l,
+                   alpha = 0.5, edgecolors = 'none')
+        ci += 1
+    ax.legend()
+    ax.grid(alpha = 0.5)
+    ax.set_title(title, fontsize=14)  
+    ax.set_xlabel('Frequency')
+    ax.set_ylabel('Counts')
+    print("OK :)")
+    if savetopdf:
+        if pdfpath == '': 
+            pdfpath = os.getcwd() + "/kmer_spectra.pdf"
+        ax.figure.savefig(pdfpath)
+        print("The Kmer spectra has been saved to " + "'" + pdfpath + "'\n")
+    plt.clf()
+    plt.close()
+
+import argparse
+parser = argparse.ArgumentParser(description='Count k-mers and plot k-mer spectrum.')
+parser.add_argument('--path', '-p', help='path of your fasta file', required=True)
+parser.add_argument('--k', '-k', type=int, help="k-mer's k (default 8)", default=8)
+parser.add_argument('--label', '-l', help='customize a label used to distinguish the results (the label will become legend in the k-mer spectrum）', default='')
+parser.add_argument('--savetofile', '-s', help='whether to save the count for each k-mer to a text file (default True)', default=True)
+parser.add_argument('--outdir', '-o', help='specify the output directory of k-mer counts result (default is to FASTA directory)', default='')
+parser.add_argument('--savetopdf', '-pdf', help='whether to save the spectrum to pdf (default True)', default=True)
+parser.add_argument('--pdfpath', '-pp', help='specify the output directory of k-mer spectrum (default is to current working directory)', default='')
+parser.add_argument('--title', '-t', help='specify the title of k-mer spectrum', default='Kmer spectrum')
+parser.add_argument('--col', '-c', help='specify the colors of points', default='')                 
+args = parser.parse_args()
+
+if __name__ == '__main__':
+    try:
+        kmer_df = KmerCounter(fasta = {}, fasta_path = args.path, k = args.k, label = args.label, savetofile = args.savetofile, outdir = args.outdir)
+        KmerSpectra(kmer_df, savetopdf = args.savetopdf, pdfpath = args.pdfpath, title = args.title, col = args.col)
+    except Exception as e:
+        print(e)

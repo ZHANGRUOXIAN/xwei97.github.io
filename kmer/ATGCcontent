@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Oct 22 21:55:28 2020
+
+@author: xinwei
+"""
+
+def get_fasta(fasta_path):
+    fasta = {}
+    print("\nGetting DNA sequence...")
+    with open(fasta_path, 'r') as file:
+	    for line in file:
+	        if line.startswith(">"):
+	            name = line.rstrip()
+	            fasta[name] = ''
+	            continue
+	        fasta[name] += line.rstrip()
+    print("There are %d sequences." % len(fasta))
+    return(fasta)
+
+def ATGCcontent(fasta={}, fasta_path=''):
+    if fasta == {}: fasta = get_fasta(fasta_path)
+    heads = list(fasta.keys())
+    seqs = list(fasta.values())
+    seqs_num = len(fasta)
+    print("\nCounting A|T|G|C of DNA sequence...")
+    for i in range(seqs_num):
+        seq = seqs[i]
+        seq_len = len(seq)
+        A = seq.count("A")
+        T = seq.count("T")
+        G = seq.count("G")
+        C = seq.count("C")
+        ATGC = A+T+G+C
+        N = seq.count("N")
+        print(heads[i])
+        print("length: %d bases" % seq_len)
+        print("A: %d (%.1f%%)" % (A, A/seq_len*100))
+        print("T: %d (%.1f%%)" % (T, T/seq_len*100))
+        print("G: %d (%.1f%%)" % (G, G/seq_len*100))
+        print("C: %d (%.1f%%)" % (C, C/seq_len*100))
+        print("ATGC: %d (%.1f%%)" % (ATGC, ATGC/seq_len*100))
+        print("N: %d (%.1f%%)" % (N, N/seq_len*100))
+
+import argparse
+parser = argparse.ArgumentParser(description='Count A|T|G|C of DNA sequence (N - unknown base).')
+parser.add_argument('--path', '-p', help='path of your fasta file', required=True)
+args = parser.parse_args()
+
+if __name__ == '__main__':
+    try:
+        ATGCcontent(fasta={}, fasta_path=args.path)
+    except Exception as e:
+        print(e)
+
+
+
+
+
+
+
+
+
+
+
