@@ -476,7 +476,7 @@ The Kmer spectra has been saved to '/public/home/weixin/kmer/pdf/EcoliK12_8mers_
 
 An example 8-mer spectrum for E. coli comparing 8-mers' frequency (i.e. multiplicities) with their number of occurrences.
 
-<img width="450" height="400" src="https://tva1.sinaimg.cn/large/0081Kckwly1gk3y86tub3j30yu0ra77r.jpg" alt="image-20201026223929415"/>
+<img width="450" height="400" div align="center" src="https://tva1.sinaimg.cn/large/0081Kckwly1gk3y86tub3j30yu0ra77r.jpg" alt="image-20201026223929415"/>
 
 
 
